@@ -1,13 +1,10 @@
-#/usr/bin/python3
+#!/usr/bin/python3
 
 from icalendar import Calendar, Event
 import feedparser
 import datetime
 import pytz
-
-url="https://uq.edu.au/events/rss/event_all_feed.php?cid=16"
-
-feed=feedparser.parse(url)
+import sys
 
 def display(cal):
     return cal.to_ical().decode().replace('\r\n', '\n').strip()
@@ -37,6 +34,10 @@ def rsstoical(rss, uid, cal):
     #event.add('dtstamp', start)
 
     cal.add_component(event)
+
+url="https://uq.edu.au/events/rss/event_all_feed.php?cid=16"
+
+feed=feedparser.parse(url)
 
 cal=Calendar()
 cal.add('prodid', '-//My Calendar product//mxm.dk//')
