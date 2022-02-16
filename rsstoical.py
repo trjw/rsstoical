@@ -10,22 +10,17 @@ from flask import Flask, Response
 
 app = Flask(__name__)
 
-@app.route('/uq.ics')
-def serve_ical():
-    return Response(cal.to_ical().decode(), mimetype='test/calendar')
-
-
 def display(cal):
     return cal.to_ical().decode().replace('\r\n', '\n').strip()
 
 def shorten_description(text):
-    abbrev={"Examination":"Exam", "Semester":"Sem", "Quarter":"Qtr", "Research":"Rsch"}
+    abbrev={"Examination":"Exam", "examination":"exam", "Semester":"Sem", "Quarter":"Qtr"}
     tmp=text
     for a in abbrev:
         tmp=tmp.replace(a,abbrev[a])
     return tmp
 
-def rsstoical(rss, uid, cal):
+def RssEntryToIcal(rss, uid, cal):
     title=shorten_description(rss['title'])
 
     summary=shorten_description(rss['summary'])
@@ -44,19 +39,25 @@ def rsstoical(rss, uid, cal):
 
     cal.add_component(event)
 
-url="https://uq.edu.au/events/rss/event_all_feed.php?cid=16"
 
-feed=feedparser.parse(url)
+@app.route('/')
+def hello():
+    return Response("Hello world\n",mimetype='text/text')
 
-cal=Calendar()
-cal.add('prodid', '-//My Calendar product//mxm.dk//')
-cal.add('version', '2.0')
+@app.route('/uqacademic.ics')
+def serve_ical():
+    url="https://uq.edu.au/events/rss/event_all_feed.php?cid=16"
 
-uid=1
-for entry in feed.entries:
-    rsstoical(entry, uid, cal)
-    uid+=1
+    feed=feedparser.parse(url)
 
-# print(cal.to_ical().decode())
+    cal=Calendar()
+    cal.add('prodid', '-//UQ Academic Calendar//mxm.dk//')
+    cal.add('version', '2.0')
 
+    uid=1
+    for entry in feed.entries:
+        RssEntryToIcal(entry, uid, cal)
+        uid+=1
+
+    return Response(cal.to_ical().decode(), mimetype='text/calendar')
 
