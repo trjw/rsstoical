@@ -34,11 +34,12 @@ def RssEntryToIcal(rss, cal):
     summary=shorten_description(rss['summary'])
 
     date=rss['published_parsed']
-    start=datetime.date(date.tm_year, date.tm_mon, date.tm_mday)
+    start=datetime.datetime(date.tm_year, date.tm_mon, date.tm_mday)
     #end=start+timedelta(days=1)
     event=Event()
     event.add('summary',title)
     event.add('description', summary)
+    event.add('dtstamp', datetime.datetime.today())
     event.add('dtstart', start)
 
     event.add('uid',"%s" % eventUID(event))
@@ -92,6 +93,7 @@ def decodeTeachingWeeks(cal, sem):
         event=Event()
         event.add('summary',title)
         event.add('description', summary)
+        event.add('dtstamp', datetime.datetime.today())
         event.add('dtstart', weekStart)
         event.add('uid',"%s" % eventUID(event))
 
@@ -115,6 +117,8 @@ def getCalendar():
     for entry in feed.entries:
         RssEntryToIcal(entry, cal)
 
+    decodeTeachingWeeks(cal, "1")
+    decodeTeachingWeeks(cal, "2")
 
     return cal
 
@@ -129,6 +133,4 @@ def serve_ical():
 
 if __name__ == "__main__":
     cal = getCalendar()
-    decodeTeachingWeeks(cal, "1")
-    decodeTeachingWeeks(cal, "2")
     print(cal.to_ical().decode())
