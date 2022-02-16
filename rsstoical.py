@@ -6,6 +6,15 @@ import datetime
 import pytz
 import sys
 
+from flask import Flask, Response
+
+app = Flask(__name__)
+
+@app.route('/uq.ics')
+def serve_ical():
+    return Response(cal.to_ical().decode(), mimetype='test/calendar')
+
+
 def display(cal):
     return cal.to_ical().decode().replace('\r\n', '\n').strip()
 
@@ -48,6 +57,6 @@ for entry in feed.entries:
     rsstoical(entry, uid, cal)
     uid+=1
 
-print(cal.to_ical().decode())
+# print(cal.to_ical().decode())
 
 
