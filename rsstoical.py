@@ -6,6 +6,8 @@ import datetime
 import pytz
 import sys
 
+import hashlib
+
 from flask import Flask, Response
 
 app = Flask(__name__)
@@ -20,7 +22,10 @@ def shorten_description(text):
         tmp=tmp.replace(a,abbrev[a])
     return tmp
 
-def RssEntryToIcal(rss, uid, cal):
+def eventUID(event):
+    return hashlib.md5(str(event).encode()).hexdigest()
+
+def RssEntryToIcal(rss, cal):
     title=shorten_description(rss['title'])
 
     summary=shorten_description(rss['summary'])
@@ -32,20 +37,15 @@ def RssEntryToIcal(rss, uid, cal):
     event=Event()
     event.add('summary',title)
     event.add('description', summary)
-    event.add('uid',"%i" % uid)
     event.add('dtstart', start)
+    event.add('uid',"%s" % eventUID(event))
     #event.add('dtend', end)
     #event.add('dtstamp', start)
 
     cal.add_component(event)
 
 
-@app.route('/')
-def hello():
-    return Response("Hello world\n",mimetype='text/text')
-
-@app.route('/uqacademic.ics')
-def serve_ical():
+def getCalendar():
     url="https://uq.edu.au/events/rss/event_all_feed.php?cid=16"
 
     feed=feedparser.parse(url)
@@ -54,10 +54,20 @@ def serve_ical():
     cal.add('prodid', '-//UQ Academic Calendar//mxm.dk//')
     cal.add('version', '2.0')
 
-    uid=1
     for entry in feed.entries:
-        RssEntryToIcal(entry, uid, cal)
-        uid+=1
+        RssEntryToIcal(entry, cal)
 
+    return cal
+
+@app.route('/')
+def hello():
+    return Response("Hello world\n",mimetype='text/text')
+
+@app.route('/uqacademic.ics')
+def serve_ical():
     return Response(cal.to_ical().decode(), mimetype='text/calendar')
 
+
+if __name__ == "__main__":
+    cal = getCalendar()
+    print(cal.to_ical().decode())
